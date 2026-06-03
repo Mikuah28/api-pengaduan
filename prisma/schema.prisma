@@ -77,10 +77,12 @@ model Komentar {
 
 model BalasKomentar {
   id             Int      @id @default(autoincrement())
+  id_user        Int      //
   id_komentar    Int
   balas_komentar String
   created_at     DateTime @default(now())
 
+  user     User     @relation(fields: [id_user], references: [id])
   komentar Komentar @relation(fields: [id_komentar], references: [id])
 
   @@map("tb_balas_komentar")
