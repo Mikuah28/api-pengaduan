@@ -1,18 +1,7 @@
 // src/controllers/laporanController.ts
 import prisma from "../database";
 import { requireAdmin, isAdmin, type UserRole } from "../middleware/authMiddleware";
-import { join } from "path";
-import { mkdir } from "fs/promises";
-
-const UPLOAD_DIR = join(process.cwd(), "uploads", "images");
-await mkdir(UPLOAD_DIR, { recursive: true });
-
-async function saveImage(file: File): Promise<string> {
-  const ext = file.name.split(".").pop();
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  await Bun.write(join(UPLOAD_DIR, filename), file);
-  return filename;
-}
+import { saveImage } from "@/utils/saveImage";
 
 // GET semua — public, bisa filter
 export async function getLaporan(query: any) {
@@ -26,7 +15,7 @@ export async function getLaporan(query: any) {
     prisma.laporan.findMany({
       where, skip, take: Number(limit),
       include: {
-        user: { select: { id: true, username: true, email: true } },
+        user: { select: { id: true, username: true, email: true, foto_profil: true } },
         kategori: true,
         _count: { select: { komentar: true } },
       },
@@ -47,10 +36,10 @@ export async function getLaporanById(id: number, set: any) {
   const data = await prisma.laporan.findUnique({
     where: { id },
     include: {
-      user: { select: { id: true, username: true, email: true } },
+      user: { select: { id: true, username: true, email: true, foto_profil: true } },
       kategori: true,
       komentar: {
-        include: { user: { select: { id: true, username: true } }, balasKomentar: true },
+        include: { user: { select: { id: true, username: true, foto_profil: true } }, balasKomentar: true },
         orderBy: { created_at: "asc" },
       },
     },

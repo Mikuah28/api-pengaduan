@@ -8,6 +8,7 @@ import { kategoriRoutes } from "./routes/kategoriRoutes";
 import { laporanRoutes } from "./routes/laporanRoutes";
 import { komentarRoutes } from "./routes/komentarRoutes";
 import { balasKomentarRoutes } from "./routes/balasKomentarRoutes";
+import { profileRoutes } from "./routes/profileRoutes";
 
 const PORT = Number(process.env.PORT) || 5000;
 
@@ -24,6 +25,7 @@ const app = new Elysia()
   .group("/api", (app) =>
     app
       .use(authRoutes)
+      .use(profileRoutes)
       .use(usersRoutes)
       .use(kategoriRoutes)
       .use(laporanRoutes)

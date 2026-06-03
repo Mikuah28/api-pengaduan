@@ -1,4 +1,3 @@
-// src/controllers/authController.ts
 import prisma from "../database";
 
 export async function login(
@@ -6,7 +5,11 @@ export async function login(
   jwt: any,
   set: any
 ) {
-  const user = await prisma.user.findUnique({ where: { email: body.email } });
+  const user = await prisma.user.findUnique({ 
+    where: { email: body.email },
+    include: { role: true }
+  });
+
   if (!user) {
     set.status = 400;
     return { message: "Login gagal", ok: false };
@@ -18,8 +21,15 @@ export async function login(
     return { message: "Login gagal", ok: false };
   }
 
-  const token = await jwt.sign({ id: user.id, role: user.role });
-  return { message: "Login berhasil", token, role: user.role, ok: true };
+  const roleName = user.role.nama_role;
+  const token = await jwt.sign({ id: user.id, role: roleName });
+  
+  return { 
+    message: "Login berhasil", 
+    token, 
+    role: roleName, 
+    ok: true 
+  };
 }
 
 export async function register(
@@ -32,12 +42,39 @@ export async function register(
     return { message: "Email sudah terdaftar", ok: false };
   }
 
-  const hashedPassword = await Bun.password.hash(body.password);
-  const user = await prisma.user.create({
-    data: { ...body, password: hashedPassword, role: "user" },
-    select: { id: true, username: true, email: true, role: true, createdAt: true },
-  });
+  try {
+    const defaultRole = await prisma.role.findUnique({
+      where: { nama_role: "user" }
+    });
 
-  set.status = 201;
-  return { message: "Registrasi berhasil", data: user, ok: true };
+    if (!defaultRole) {
+      set.status = 500;
+      return { message: "Konfigurasi role 'user' belum di-seed di database", ok: false };
+    }
+
+    const hashedPassword = await Bun.password.hash(body.password);
+    
+    const user = await prisma.user.create({
+      data: { 
+        username: body.username,
+        email: body.email,
+        password: hashedPassword,
+        roleId: defaultRole.id 
+      },
+      select: { 
+        id: true, 
+        username: true, 
+        email: true, 
+        role: { select: { nama_role: true } }, 
+        createdAt: true 
+      },
+    });
+
+    set.status = 201;
+    return { message: "Registrasi berhasil", data: user, ok: true };
+
+  } catch (error: any) {
+    set.status = 500;
+    return { message: error.message || "Internal server error", ok: false };
+  }
 }

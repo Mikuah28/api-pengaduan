@@ -4,15 +4,33 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  console.log("🌱 Memulai proses seeding...");
+
+  // 1. SEED MASTER ROLES (Wajib duluan karena User bergantung pada Role)
+  const roles = ["super_admin", "admin", "user"];
+  const roleMap: Record<string, number> = {};
+
+  for (const nama_role of roles) {
+    const roleRecord = await prisma.role.upsert({
+      where: { nama_role },
+      update: {},
+      create: { nama_role },
+    });
+    roleMap[nama_role] = roleRecord.id;
+  }
+  console.log("✅ Master roles berhasil di-seed.");
+
+  // 2. SEED USERS (Menggunakan ID dari master roles)
+
   // Super Admin
   await prisma.user.upsert({
     where: { email: "superadmin@laporan.com" },
     update: {},
     create: {
       username: "Super Admin",
-      email: "superadmin@gmail.com",
+      email: "superadmin@laporan.com", // Perbaikan string kosong sebelumnya
       password: await Bun.password.hash("superadmin123"),
-      role: "super_admin",
+      roleId: roleMap["super_admin"], // Menghubungkan ID dari hasil seeder role
     },
   });
 
@@ -24,7 +42,7 @@ async function main() {
       username: "Admin",
       email: "admin@gmail.com",
       password: await Bun.password.hash("admin123"),
-      role: "admin",
+      roleId: roleMap["admin"],
     },
   });
 
@@ -36,11 +54,11 @@ async function main() {
       username: "Alpha",
       email: "alpha@gmail.com",
       password: await Bun.password.hash("12345678"),
-      role: "user",
+      roleId: roleMap["user"],
     },
   });
+  console.log("✅ Data users berhasil di-seed.");
 
-  // Kategori
   const kategoris = [
     "Infrastruktur Jalan",
     "Kebersihan & Sampah",
@@ -50,20 +68,31 @@ async function main() {
     "Lainnya",
   ];
 
-  for (const nama_kategori of kategoris) {
+  for (let i = 0; i < kategoris.length; i++) {
+    const nama_kategori = kategoris[i];
     await prisma.kategori.upsert({
-      where: { id: kategoris.indexOf(nama_kategori) + 1 },
+      where: { id: i + 1 },
       update: {},
-      create: { nama_kategori },
+      create: { 
+        id: i + 1,
+        nama_kategori 
+      },
     });
   }
+  console.log("✅ Data kategori berhasil di-seed.");
 
-  console.log("✅ Seed selesai!");
-  console.log("   superadmin@gmail.com / superadmin123");
-  console.log("   admin@gmail.com      / admin123");
-  console.log("   alpha@gmail.com       / 12345678");
+  console.log("\n🚀 SEED SELESAI!");
+  console.log("🔑 Akun Login Default:");
+  console.log("   - superadmin@laporan.com / superadmin123");
+  console.log("   - admin@gmail.com       / admin123");
+  console.log("   - alpha@gmail.com       / 12345678");
 }
 
 main()
-  .catch((e) => { console.error(e); process.exit(1); })
-  .finally(() => prisma.$disconnect());
+  .catch((e) => {
+    console.error("❌ Terjadi error saat seeding:", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
