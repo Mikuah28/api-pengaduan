@@ -18,18 +18,20 @@ model Role {
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   username    String
-  email       String   @unique
+  email       String  @unique
   password    String
-  foto_profil String?  
-  
-  roleId      Int      @default(1) @map("role_id") 
-  role        Role     @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  createdAt   DateTime @default(now()) @map("created_at")
+  foto_profil String?
 
-  laporan     Laporan[]
-  komentar    Komentar[]
+  roleId    Int      @default(1) @map("role_id")
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  laporan        Laporan[]
+  komentar       Komentar[]
+  notifikasi     Notification[]
+  balasKomentars BalasKomentar[]
 
   @@map("tb_users")
 }
@@ -54,9 +56,10 @@ model Laporan {
   status      String   @default("menunggu")
   create_at   DateTime @default(now())
 
-  user     User       @relation(fields: [id_user], references: [id])
-  kategori Kategori   @relation(fields: [kategori_id], references: [id])
-  komentar Komentar[]
+  user          User           @relation(fields: [id_user], references: [id])
+  kategori      Kategori       @relation(fields: [kategori_id], references: [id])
+  komentar      Komentar[]
+  notifications Notification[]
 
   @@map("tb_laporan")
 }
@@ -71,13 +74,14 @@ model Komentar {
   user          User            @relation(fields: [id_user], references: [id])
   laporan       Laporan         @relation(fields: [id_laporan], references: [id])
   balasKomentar BalasKomentar[]
+  notifications Notification[]
 
   @@map("tb_komentar")
 }
 
 model BalasKomentar {
   id             Int      @id @default(autoincrement())
-  id_user        Int      //
+  id_user        Int //
   id_komentar    Int
   balas_komentar String
   created_at     DateTime @default(now())
@@ -86,4 +90,20 @@ model BalasKomentar {
   komentar Komentar @relation(fields: [id_komentar], references: [id])
 
   @@map("tb_balas_komentar")
+}
+
+model Notification {
+  id             Int      @id @default(autoincrement())
+  id_user        Int
+  id_laporan     Int?
+  id_komentar    Int?
+  isi_notifikasi String
+  is_read        Boolean  @default(false) // Tambahan krusial: Untuk menandai notifikasi sudah dibaca atau belum
+  created_at     DateTime @default(now())
+
+  user     User      @relation(fields: [id_user], references: [id], onDelete: Cascade)
+  laporan  Laporan?  @relation(fields: [id_laporan], references: [id], onDelete: Cascade)
+  komentar Komentar? @relation(fields: [id_komentar], references: [id], onDelete: Cascade)
+
+  @@map("tb_notifikasi")
 }

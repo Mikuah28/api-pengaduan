@@ -9,6 +9,7 @@ import { laporanRoutes } from "./routes/laporanRoutes";
 import { komentarRoutes } from "./routes/komentarRoutes";
 import { balasKomentarRoutes } from "./routes/balasKomentarRoutes";
 import { profileRoutes } from "./routes/profileRoutes";
+import { notificationRoutes } from "./routes/notificationRoutes";
 
 const PORT = Number(process.env.PORT) || 5000;
 
@@ -31,6 +32,7 @@ const app = new Elysia()
       .use(laporanRoutes)
       .use(komentarRoutes)
       .use(balasKomentarRoutes)
+      .use(notificationRoutes)
   )
 
   .onError(({ code, error, set }) => {
