@@ -1,4 +1,5 @@
 // src/controllers/usersController.ts
+import { getRoleIdByName } from "@/utils/getrole";
 import prisma from "../database";
 import { requireAdmin, requireSuperAdmin, type UserRole } from "../middleware/authMiddleware";
 
@@ -47,31 +48,55 @@ export async function createUser(
     return { message: "Email sudah terdaftar", ok: false };
   }
 
-  const hashedPassword = await Bun.password.hash(body.password);
-  const user = await prisma.user.create({
-    data: { ...body, password: hashedPassword },
-    select: { id: true, username: true, email: true, role: true, createdAt: true },
-  });
+  try {
+    // Cari id_role dinamis berdasarkan string nama role di request body
+    const targetRoleId = await getRoleIdByName(body.role);
 
-  set.status = 201;
-  return { message: "success", data: user, ok: true };
+    const hashedPassword = await Bun.password.hash(body.password);
+    const user = await prisma.user.create({
+      data: {
+        username: body.username,
+        email: body.email,
+        password: hashedPassword,
+        roleId: targetRoleId, // Masukkan id dari query tabel role
+      },
+      select: { 
+        id: true, 
+        username: true, 
+        email: true, 
+        role: { select: { nama_role: true } }, // Select nama_role dari relasi
+        createdAt: true 
+      },
+    });
+
+    set.status = 201;
+    return { message: "success", data: user, ok: true };
+  } catch (error: any) {
+    set.status = 500;
+    return { message: error.message || "Internal server error", ok: false };
+  }
 }
 
-// PUT update user — aturan:
-// super_admin  → bisa update siapa saja, termasuk ganti role
-// admin        → hanya bisa update data user biasa (tidak bisa ubah ke admin/super_admin)
-// user         → hanya bisa update data diri sendiri, tidak bisa ganti role
+// 2. UPDATE USER
 export async function updateUser(
   id: number,
   body: { username?: string; email?: string; role?: UserRole },
   currentUser: { id: number; role: UserRole },
   set: any
 ) {
-  const target = await prisma.user.findUnique({ where: { id } });
+  // Ambil data user target beserta data teks nama_role-nya melalui relasi include/select
+  const target = await prisma.user.findUnique({ 
+    where: { id },
+    include: { role: true }
+  });
+  
   if (!target) {
     set.status = 404;
     return { message: "User tidak ditemukan", ok: false };
   }
+
+  // Ambil teks nama role dari target user saat ini
+  const targetRoleName = target.role.nama_role;
 
   if (currentUser.role === "user") {
     // user hanya bisa edit diri sendiri dan tidak boleh ganti role
@@ -87,7 +112,7 @@ export async function updateUser(
 
   if (currentUser.role === "admin") {
     // admin tidak bisa mengedit sesama admin atau super_admin
-    if (target.role === "admin" || target.role === "super_admin") {
+    if (targetRoleName === "admin" || targetRoleName === "super_admin") {
       set.status = 403;
       return { message: "Admin tidak bisa mengubah data admin lain atau super admin", ok: false };
     }
@@ -98,12 +123,34 @@ export async function updateUser(
     }
   }
 
-  const updated = await prisma.user.update({
-    where: { id },
-    data: body,
-    select: { id: true, username: true, email: true, role: true, updatedAt: true },
-  });
-  return { message: "success", data: updated, ok: true };
+  try {
+    // Siapkan penampung objek untuk query Prisma update data
+    const updateData: any = {};
+    if (body.username) updateData.username = body.username;
+    if (body.email) updateData.email = body.email;
+    
+    // Jika ada request perubahan role, cari ID dinamisnya dari tabel role
+    if (body.role) {
+      updateData.roleId = await getRoleIdByName(body.role);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: { 
+        id: true, 
+        username: true, 
+        email: true, 
+        role: { select: { nama_role: true } }, 
+        updatedAt: true 
+      },
+    });
+    
+    return { message: "success", data: updated, ok: true };
+  } catch (error: any) {
+    set.status = 500;
+    return { message: error.message || "Internal server error", ok: false };
+  }
 }
 
 // DELETE user — aturan:
@@ -122,14 +169,22 @@ export async function deleteUser(
     return { message: "Tidak bisa menghapus akun sendiri", ok: false };
   }
 
-  const target = await prisma.user.findUnique({ where: { id } });
+  const target = await prisma.user.findUnique({ 
+    where: { id },
+    include: { role: true }
+  });
+
   if (!target) {
     set.status = 404;
     return { message: "User tidak ditemukan", ok: false };
   }
 
-  // admin hanya bisa hapus user biasa
-  if (currentUser.role === "admin" && (target.role === "admin" || target.role === "super_admin")) {
+  const targetRoleName = target.role.nama_role;
+
+  if (
+    currentUser.role === "admin" && 
+    (targetRoleName === "admin" || targetRoleName === "super_admin")
+  ) {
     set.status = 403;
     return { message: "Admin tidak bisa menghapus admin lain atau super admin", ok: false };
   }

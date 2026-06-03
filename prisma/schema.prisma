@@ -7,28 +7,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  user
-  admin
-  super_admin
+model Role {
+  id        Int      @id @default(autoincrement())
+  nama_role String   @unique // Contoh isi: "user", "admin", "super_admin"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  users User[] // Relasi kebalikannya: Satu role bisa dimiliki banyak user
+
+  @@map("tb_roles")
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String
-  email     String   @unique
-  password  String
-  role      String   @default("user")
-  createdAt DateTime @default(now()) @map("created_at")
+  id          Int      @id @default(autoincrement())
+  username    String
+  email       String   @unique
+  password    String
+  foto_profil String?  
+  
+  roleId      Int      @default(1) @map("role_id") 
+  role        Role     @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
 
-  laporan  Laporan[]
-  komentar Komentar[]
+  laporan     Laporan[]
+  komentar    Komentar[]
 
   @@map("tb_users")
 }
 
 model Kategori {
-  id           Int       @id @default(autoincrement())
+  id            Int    @id @default(autoincrement())
   nama_kategori String
 
   laporan Laporan[]
@@ -47,8 +54,8 @@ model Laporan {
   status      String   @default("menunggu")
   create_at   DateTime @default(now())
 
-  user     User     @relation(fields: [id_user], references: [id])
-  kategori Kategori @relation(fields: [kategori_id], references: [id])
+  user     User       @relation(fields: [id_user], references: [id])
+  kategori Kategori   @relation(fields: [kategori_id], references: [id])
   komentar Komentar[]
 
   @@map("tb_laporan")
@@ -61,8 +68,8 @@ model Komentar {
   isi_komentar String
   created_at   DateTime @default(now())
 
-  user    User    @relation(fields: [id_user], references: [id])
-  laporan Laporan @relation(fields: [id_laporan], references: [id])
+  user          User            @relation(fields: [id_user], references: [id])
+  laporan       Laporan         @relation(fields: [id_laporan], references: [id])
   balasKomentar BalasKomentar[]
 
   @@map("tb_komentar")
