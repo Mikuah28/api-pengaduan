@@ -1,3 +1,6 @@
+-- CreateEnum
+CREATE TYPE "Role" AS ENUM ('user', 'admin', 'super_admin');
+
 -- CreateTable
 CREATE TABLE "tb_users" (
     "id" SERIAL NOT NULL,
@@ -47,6 +50,7 @@ CREATE TABLE "tb_komentar" (
 -- CreateTable
 CREATE TABLE "tb_balas_komentar" (
     "id" SERIAL NOT NULL,
+    "id_user" INTEGER NOT NULL,
     "id_komentar" INTEGER NOT NULL,
     "balas_komentar" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -68,6 +72,9 @@ ALTER TABLE "tb_komentar" ADD CONSTRAINT "tb_komentar_id_user_fkey" FOREIGN KEY 
 
 -- AddForeignKey
 ALTER TABLE "tb_komentar" ADD CONSTRAINT "tb_komentar_id_laporan_fkey" FOREIGN KEY ("id_laporan") REFERENCES "tb_laporan"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "tb_balas_komentar" ADD CONSTRAINT "tb_balas_komentar_id_user_fkey" FOREIGN KEY ("id_user") REFERENCES "tb_users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "tb_balas_komentar" ADD CONSTRAINT "tb_balas_komentar_id_komentar_fkey" FOREIGN KEY ("id_komentar") REFERENCES "tb_komentar"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

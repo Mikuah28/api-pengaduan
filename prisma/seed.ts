@@ -59,9 +59,9 @@ async function main() {
   }
 
   console.log("✅ Seed selesai!");
-  console.log("   superadmin@laporan.com / superadmin123");
-  console.log("   admin@laporan.com      / admin123");
-  console.log("   user@laporan.com       / user123");
+  console.log("   superadmin@gmail.com / superadmin123");
+  console.log("   admin@gmail.com      / admin123");
+  console.log("   alpha@gmail.com       / 12345678");
 }
 
 main()
