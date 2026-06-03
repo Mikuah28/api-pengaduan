@@ -15,7 +15,7 @@ export async function getLaporan(query: any) {
     prisma.laporan.findMany({
       where, skip, take: Number(limit),
       include: {
-        user: { select: { id: true, username: true, email: true } },
+        user: { select: { id: true, username: true, email: true, foto_profil: true } },
         kategori: true,
         _count: { select: { komentar: true } },
       },
@@ -36,10 +36,10 @@ export async function getLaporanById(id: number, set: any) {
   const data = await prisma.laporan.findUnique({
     where: { id },
     include: {
-      user: { select: { id: true, username: true, email: true } },
+      user: { select: { id: true, username: true, email: true, foto_profil: true } },
       kategori: true,
       komentar: {
-        include: { user: { select: { id: true, username: true } }, balasKomentar: true },
+        include: { user: { select: { id: true, username: true, foto_profil: true } }, balasKomentar: true },
         orderBy: { created_at: "asc" },
       },
     },
