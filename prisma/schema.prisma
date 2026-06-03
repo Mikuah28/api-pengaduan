@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  user
+  admin
+  super_admin
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String
+  email     String   @unique
+  password  String
+  role      String   @default("user")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  laporan  Laporan[]
+  komentar Komentar[]
+
+  @@map("tb_users")
+}
+
+model Kategori {
+  id           Int       @id @default(autoincrement())
+  nama_kategori String
+
+  laporan Laporan[]
+
+  @@map("tb_kategori")
+}
+
+model Laporan {
+  id          Int      @id @default(autoincrement())
+  id_user     Int
+  judul       String
+  gambar      String?
+  deskripsi   String
+  lokasi      String
+  kategori_id Int
+  status      String   @default("menunggu")
+  create_at   DateTime @default(now())
+
+  user     User     @relation(fields: [id_user], references: [id])
+  kategori Kategori @relation(fields: [kategori_id], references: [id])
+  komentar Komentar[]
+
+  @@map("tb_laporan")
+}
+
+model Komentar {
+  id           Int      @id @default(autoincrement())
+  id_user      Int
+  id_laporan   Int
+  isi_komentar String
+  created_at   DateTime @default(now())
+
+  user    User    @relation(fields: [id_user], references: [id])
+  laporan Laporan @relation(fields: [id_laporan], references: [id])
+  balasKomentar BalasKomentar[]
+
+  @@map("tb_komentar")
+}
+
+model BalasKomentar {
+  id             Int      @id @default(autoincrement())
+  id_komentar    Int
+  balas_komentar String
+  created_at     DateTime @default(now())
+
+  komentar Komentar @relation(fields: [id_komentar], references: [id])
+
+  @@map("tb_balas_komentar")
+}
