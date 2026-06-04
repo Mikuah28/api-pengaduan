@@ -11,6 +11,8 @@ import { balasKomentarRoutes } from "./routes/balasKomentarRoutes";
 import { profileRoutes } from "./routes/profileRoutes";
 import { notificationRoutes } from "./routes/notificationRoutes";
 import { logRoutes } from "./routes/activityLogRoutes";
+import { publicRoutes } from "./routes/publicRoutes";
+import { dashboardRoutes } from "./routes/dashboardRoutes";
 import { likeRoutes } from "./routes/likeRoutes";
 import { searchRoutes } from "./routes/searchRoutes";
 
@@ -29,6 +31,7 @@ const app = new Elysia()
 
   .group("/api", (app) =>
     app
+      .use(publicRoutes)
       .use(authRoutes)
       .use(profileRoutes)
       .use(usersRoutes)
@@ -38,6 +41,7 @@ const app = new Elysia()
       .use(balasKomentarRoutes)
       .use(notificationRoutes)
       .use(logRoutes)
+      .use(dashboardRoutes)
       .use(likeRoutes)
       .use(searchRoutes)
   )

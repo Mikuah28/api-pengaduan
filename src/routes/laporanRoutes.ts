@@ -11,9 +11,9 @@ export const laporanRoutes = new Elysia({ prefix: "/laporan" })
 
   .get("/", ({ query }) => getLaporan(query))
 
-  .get("/user/me", async ({ jwt, headers, set }) => {
+  .get("/user/me", async ({ query, jwt, headers, set }) => {
     const currentUser = await verifyToken(jwt, headers.authorization, set);
-    return getLaporanByUser(currentUser);
+    return getLaporanByUser(query, currentUser);
   })
 
   .get("/:id", ({ params, set }) => getLaporanById(Number(params.id), set))

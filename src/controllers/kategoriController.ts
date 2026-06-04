@@ -5,8 +5,56 @@ import { requireAdmin, type UserRole } from "../middleware/authMiddleware";
 
 // GET semua — public
 export async function getKategori() {
-  const data = await prisma.kategori.findMany({ orderBy: { id: "asc" } });
-  return { message: "success", data, ok: true };
+  const data = await prisma.kategori.findMany({
+    orderBy: { id: "asc" },
+    include: {
+      _count: {
+        select: {
+          laporan: true
+        }
+      }
+    }
+  });
+
+  return {
+    message: "success",
+    data,
+    ok: true
+  };
+}
+
+export async function getKategoriTrending() {
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
+  const kategoriWithTodayLaporan = await prisma.kategori.findMany({
+    include: {
+      _count: {
+        select: {
+          laporan: {
+            where: {
+              create_at: {
+                gte: startOfToday,
+                lte: endOfToday,
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const trendingData = kategoriWithTodayLaporan
+    .sort((a, b) => b._count.laporan - a._count.laporan)
+    .slice(0, 3);
+
+  return {
+    message: "success",
+    data: trendingData,
+    ok: true,
+  };
 }
 
 // GET by id — public

@@ -55,13 +55,33 @@ export async function getLaporanById(id: number, set: any) {
 }
 
 // GET laporan milik sendiri — semua role yang login
-export async function getLaporanByUser(currentUser: { id: number; role: UserRole }) {
-  const data = await prisma.laporan.findMany({
-    where: { id_user: currentUser.id },
-    include: { kategori: true, _count: { select: { komentar: true } } },
-    orderBy: { create_at: "desc" },
-  });
-  return { message: "success", data, ok: true };
+export async function getLaporanByUser(query: any, currentUser: { id: number; role: UserRole }) {
+  const { status, kategori_id, page = "1", limit = "10" } = query;
+  const where: any = {
+    id_user: currentUser.id,
+  };
+  if (status) where.status = status;
+  if (kategori_id) where.kategori_id = Number(kategori_id);
+
+  const skip = (Number(page) - 1) * Number(limit);
+  const [data, total] = await prisma.$transaction([
+    prisma.laporan.findMany({
+      where, skip, take: Number(limit),
+      include: {
+        user: { select: { id: true, username: true, email: true, foto_profil: true } },
+        kategori: true,
+        _count: { select: { komentar: true } },
+      },
+      orderBy: { create_at: "desc" },
+    }),
+    prisma.laporan.count({ where }),
+  ]);
+
+  return {
+    message: "success", data,
+    meta: { total, page: Number(page), limit: Number(limit), totalPages: Math.ceil(total / Number(limit)) },
+    ok: true,
+  };
 }
 
 // POST buat laporan — semua role yang login
