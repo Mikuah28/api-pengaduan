@@ -27,10 +27,10 @@ export async function createKomentar(
   set: any
 ) {
   // 1. Ambil data laporan beserta id_user pemilik laporan untuk target notifikasi
-  const laporan = await prisma.laporan.findUnique({ 
-    where: { id: body.id_laporan } 
+  const laporan = await prisma.laporan.findUnique({
+    where: { id: body.id_laporan }
   });
-  
+
   if (!laporan) {
     set.status = 404;
     return { message: "Laporan tidak ditemukan", ok: false };
@@ -38,24 +38,23 @@ export async function createKomentar(
 
   // 2. Buat komentar baru
   const data = await prisma.komentar.create({
-    data: { 
-      id_user: currentUser.id, 
-      id_laporan: body.id_laporan, 
-      isi_komentar: body.isi_komentar 
+    data: {
+      id_user: currentUser.id,
+      id_laporan: body.id_laporan,
+      isi_komentar: body.isi_komentar
     },
     include: { user: { select: { id: true, username: true } } },
   });
 
   if (laporan.id_user !== currentUser.id) {
-    await prisma.notification.create({
-      data: {
-        id_user: laporan.id_user, // Penerima adalah pemilik laporan
-        id_laporan: body.id_laporan,
-        id_komentar: data.id, // ID komentar yang baru saja dibuat
-        isi_notifikasi: "komentar baru pada laporan anda",
-        is_read: false
-      }
-    });
+    await useNotification({
+      id_user: laporan.id_user, // Penerima adalah pemilik laporan
+      id_laporan: body.id_laporan,
+      id_komentar: data.id, // ID komentar yang baru saja dibuat
+      isi_notifikasi: "komentar baru pada laporan anda",
+      is_read: false
+    }
+    );
   }
 
   set.status = 201;

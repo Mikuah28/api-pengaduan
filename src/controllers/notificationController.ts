@@ -12,10 +12,6 @@ export async function getNotifications(currentUser: { id: number; role: UserRole
   const [data, total] = await prisma.$transaction([
     prisma.notification.findMany({
       where, skip, take: Number(limit),
-      include: {
-        laporan: { select: { id: true, judul: true, status: true } },
-        komentar: { select: { id: true, isi_komentar: true } },
-      },
       orderBy: { created_at: "desc" },
     }),
     prisma.notification.count({ where }),

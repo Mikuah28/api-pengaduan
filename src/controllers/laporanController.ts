@@ -1,4 +1,5 @@
 // src/controllers/laporanController.ts
+import { useNotification } from "@/utils/useNotification";
 import prisma from "../database";
 import { requireAdmin, isAdmin, type UserRole } from "../middleware/authMiddleware";
 import { saveImage } from "@/utils/saveImage";
@@ -131,6 +132,13 @@ export async function editStatus(id: number, status: string, currentUser: { role
   }
 
   const data = await prisma.laporan.update({ where: { id }, data: { status } });
+
+  await useNotification({
+    id_user: existing.id_user,
+    id_laporan: existing.id,
+    isi_notifikasi: `Laporan Anda berubah status menjadi ${status}`,
+    is_read: false
+  })
   return { message: "Status berhasil diupdate", data, ok: true };
 }
 
