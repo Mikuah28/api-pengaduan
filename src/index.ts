@@ -11,6 +11,7 @@ import { balasKomentarRoutes } from "./routes/balasKomentarRoutes";
 import { profileRoutes } from "./routes/profileRoutes";
 import { notificationRoutes } from "./routes/notificationRoutes";
 import { logRoutes } from "./routes/activityLogRoutes";
+import { publicRoutes } from "./routes/publicRoutes";
 
 const PORT = Number(process.env.PORT) || 5000;
 
@@ -26,6 +27,7 @@ const app = new Elysia()
 
   .group("/api", (app) =>
     app
+      .use(publicRoutes)
       .use(authRoutes)
       .use(profileRoutes)
       .use(usersRoutes)

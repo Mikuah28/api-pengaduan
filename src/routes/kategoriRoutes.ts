@@ -1,12 +1,13 @@
 // src/routes/kategoriRoutes.ts
 import { Elysia, t } from "elysia";
 import { jwtPlugin, verifyToken } from "../middleware/authMiddleware";
-import { getKategori, getKategoriById, createKategori, updateKategori, deleteKategori } from "../controllers/kategoriController";
+import { getKategori, getKategoriById, createKategori, updateKategori, deleteKategori, getKategoriTrending } from "../controllers/kategoriController";
 
 export const kategoriRoutes = new Elysia({ prefix: "/kategori" })
   .use(jwtPlugin)
 
   .get("/", () => getKategori())
+  .get("/trending", () => getKategoriTrending())
 
   .get("/:id", ({ params, set }) => getKategoriById(Number(params.id), set))
 
