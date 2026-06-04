@@ -28,10 +28,10 @@ model User {
   role      Role     @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   createdAt DateTime @default(now()) @map("created_at")
 
-  laporan        Laporan[]
-  komentar       Komentar[]
-  notifikasi     Notification[]
-  balasKomentars BalasKomentar[]
+  laporan     Laporan[]
+  komentar    Komentar[]
+  balasKomentar BalasKomentar[]
+  likes         Like[]
 
   @@map("tb_users")
 }
@@ -60,6 +60,10 @@ model Laporan {
   kategori      Kategori       @relation(fields: [kategori_id], references: [id])
   komentar      Komentar[]
   notifications Notification[]
+  user     User       @relation(fields: [id_user], references: [id])
+  kategori Kategori   @relation(fields: [kategori_id], references: [id])
+  komentar Komentar[]
+  likes    Like[]
 
   @@map("tb_laporan")
 }
@@ -114,4 +118,16 @@ model ActivityLog {
   created_at DateTime @default(now())
 
   @@map("tb_log_aktifitas")
+}
+model Like {
+  id        Int      @id @default(autoincrement())
+  idUser    Int      @map("id_user")
+  idLaporan Int      @map("id_laporan")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [idUser],    references: [id], onDelete: Cascade)
+  laporan Laporan @relation(fields: [idLaporan], references: [id], onDelete: Cascade)
+
+  @@unique([idUser, idLaporan]) // 1 user hanya bisa like 1 laporan sekali
+  @@map("tb_likes")
 }
