@@ -1,3 +1,4 @@
+import { useLog } from "@/utils/useLog";
 import prisma from "../database";
 import { saveImage } from "@/utils/saveImage";
 
@@ -104,6 +105,7 @@ export async function updateProfileUser(
       ...rest,
       role: role.nama_role,
     };
+    await useLog(`user ${currentUser.id} mengupdate profil`)
 
     return { message: "Profil berhasil diperbarui", data: formattedData, ok: true };
   } catch (error: any) {

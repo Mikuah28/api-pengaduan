@@ -1,6 +1,8 @@
 // src/controllers/komentarController.ts
+import { useNotification } from "@/utils/useNotification";
 import prisma from "../database";
 import { isAdmin, type UserRole } from "../middleware/authMiddleware";
+import { useLog } from "@/utils/useLog";
 
 // GET — public
 export async function getKomentar(laporan_id: number, set: any) {
@@ -25,16 +27,38 @@ export async function createKomentar(
   currentUser: { id: number; role: UserRole },
   set: any
 ) {
-  const laporan = await prisma.laporan.findUnique({ where: { id: body.id_laporan } });
+  // 1. Ambil data laporan beserta id_user pemilik laporan untuk target notifikasi
+  const laporan = await prisma.laporan.findUnique({
+    where: { id: body.id_laporan }
+  });
+
   if (!laporan) {
     set.status = 404;
     return { message: "Laporan tidak ditemukan", ok: false };
   }
 
+  // 2. Buat komentar baru
   const data = await prisma.komentar.create({
-    data: { id_user: currentUser.id, id_laporan: body.id_laporan, isi_komentar: body.isi_komentar },
+    data: {
+      id_user: currentUser.id,
+      id_laporan: body.id_laporan,
+      isi_komentar: body.isi_komentar
+    },
     include: { user: { select: { id: true, username: true } } },
   });
+
+  if (laporan.id_user !== currentUser.id) {
+    await useNotification({
+      id_user: laporan.id_user, // Penerima adalah pemilik laporan
+      id_laporan: body.id_laporan,
+      id_komentar: data.id, // ID komentar yang baru saja dibuat
+      isi_notifikasi: "komentar baru pada laporan anda",
+      is_read: false
+    }
+    );
+
+    await useLog(`user id ${currentUser.id} komentar ke laporan id ${laporan.id}`)
+  }
 
   set.status = 201;
   return { message: "Komentar berhasil ditambahkan", data, ok: true };
@@ -53,5 +77,7 @@ export async function deleteKomentar(id: number, currentUser: { id: number; role
   }
 
   await prisma.komentar.delete({ where: { id } });
+
+  await useLog(`${currentUser.role} id ${currentUser.id} delete komentar id ${id}`)
   return { message: "Komentar berhasil dihapus", ok: true };
 }
