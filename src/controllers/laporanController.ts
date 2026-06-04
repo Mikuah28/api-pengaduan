@@ -42,7 +42,11 @@ export async function getLaporanById(id: number, set: any) {
       kategori: true,
       _count: { select: { komentar: true, likes: true } },
       komentar: {
-        include: { user: { select: { id: true, username: true, foto_profil: true } }, balasKomentar: true },
+        include: { user: { select: { id: true, username: true, foto_profil: true } }, balasKomentar: {
+          include:{
+            user:{ select: { id: true, username: true, foto_profil: true } }
+          }
+        } },
         orderBy: { created_at: "asc" },
       },
     },
