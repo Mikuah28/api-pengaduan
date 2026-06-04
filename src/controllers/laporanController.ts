@@ -17,7 +17,7 @@ export async function getLaporan(query: any) {
       include: {
         user: { select: { id: true, username: true, email: true, foto_profil: true } },
         kategori: true,
-        _count: { select: { komentar: true } },
+        _count: { select: { komentar: true, likes: true } },
       },
       orderBy: { create_at: "desc" },
     }),
@@ -38,6 +38,7 @@ export async function getLaporanById(id: number, set: any) {
     include: {
       user: { select: { id: true, username: true, email: true, foto_profil: true } },
       kategori: true,
+      _count: { select: { komentar: true, likes: true } },
       komentar: {
         include: { user: { select: { id: true, username: true, foto_profil: true } }, balasKomentar: true },
         orderBy: { created_at: "asc" },

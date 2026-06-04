@@ -29,7 +29,7 @@ export async function createBalasKomentar(
   }
 
   const data = await prisma.balasKomentar.create({
-    data: { id_komentar: body.id_komentar, balas_komentar: body.balas_komentar },
+    data: { id_user: currentUser.id, id_komentar: body.id_komentar, balas_komentar: body.balas_komentar },
   });
 
   set.status = 201;

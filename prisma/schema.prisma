@@ -30,6 +30,8 @@ model User {
 
   laporan     Laporan[]
   komentar    Komentar[]
+  balasKomentar BalasKomentar[]
+  likes         Like[]
 
   @@map("tb_users")
 }
@@ -57,6 +59,7 @@ model Laporan {
   user     User       @relation(fields: [id_user], references: [id])
   kategori Kategori   @relation(fields: [kategori_id], references: [id])
   komentar Komentar[]
+  likes    Like[]
 
   @@map("tb_laporan")
 }
@@ -86,4 +89,17 @@ model BalasKomentar {
   komentar Komentar @relation(fields: [id_komentar], references: [id])
 
   @@map("tb_balas_komentar")
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  idUser    Int      @map("id_user")
+  idLaporan Int      @map("id_laporan")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [idUser],    references: [id], onDelete: Cascade)
+  laporan Laporan @relation(fields: [idLaporan], references: [id], onDelete: Cascade)
+
+  @@unique([idUser, idLaporan]) // 1 user hanya bisa like 1 laporan sekali
+  @@map("tb_likes")
 }
