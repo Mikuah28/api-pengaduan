@@ -1,3 +1,4 @@
+import { useLog } from "@/utils/useLog";
 import prisma from "../database";
 
 export async function login(
@@ -5,7 +6,7 @@ export async function login(
   jwt: any,
   set: any
 ) {
-  const user = await prisma.user.findUnique({ 
+  const user = await prisma.user.findUnique({
     where: { email: body.email },
     include: { role: true }
   });
@@ -23,12 +24,14 @@ export async function login(
 
   const roleName = user.role.nama_role;
   const token = await jwt.sign({ id: user.id, role: roleName });
-  
-  return { 
-    message: "Login berhasil", 
-    token, 
-    role: roleName, 
-    ok: true 
+
+  await useLog(`${user.role.nama_role} id ${user.id} login`)
+
+  return {
+    message: "Login berhasil",
+    token,
+    role: roleName,
+    ok: true
   };
 }
 
@@ -53,24 +56,26 @@ export async function register(
     }
 
     const hashedPassword = await Bun.password.hash(body.password);
-    
+
     const user = await prisma.user.create({
-      data: { 
+      data: {
         username: body.username,
         email: body.email,
         password: hashedPassword,
-        roleId: defaultRole.id 
+        roleId: defaultRole.id
       },
-      select: { 
-        id: true, 
-        username: true, 
-        email: true, 
-        role: { select: { nama_role: true } }, 
-        createdAt: true 
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: { select: { nama_role: true } },
+        createdAt: true
       },
     });
 
     set.status = 201;
+    await useLog(`Pengguna baru terdaftar ${body.username}`)
+
     return { message: "Registrasi berhasil", data: user, ok: true };
 
   } catch (error: any) {

@@ -107,3 +107,11 @@ model Notification {
 
   @@map("tb_notifikasi")
 }
+
+model ActivityLog {
+  id         Int      @id @default(autoincrement())
+  activity   String
+  created_at DateTime @default(now())
+
+  @@map("tb_log_aktifitas")
+}

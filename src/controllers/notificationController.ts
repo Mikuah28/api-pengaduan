@@ -1,4 +1,5 @@
 // src/controllers/notificationController.ts
+import { useLog } from "@/utils/useLog";
 import prisma from "../database";
 import { requireAdmin, isAdmin, type UserRole } from "../middleware/authMiddleware";
 
@@ -114,5 +115,6 @@ export async function deleteNotification(id: number, currentUser: { id: number; 
   }
 
   await prisma.notification.delete({ where: { id } });
+  await useLog(`${currentUser.role} id ${currentUser.id} menghapus notifikasi dengan id ${id}`)
   return { message: "Notifikasi berhasil dihapus", ok: true };
 }

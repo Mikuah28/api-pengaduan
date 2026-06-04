@@ -3,6 +3,7 @@ import { useNotification } from "@/utils/useNotification";
 import prisma from "../database";
 import { requireAdmin, isAdmin, type UserRole } from "../middleware/authMiddleware";
 import { saveImage } from "@/utils/saveImage";
+import { useLog } from "@/utils/useLog";
 
 // GET semua — public, bisa filter
 export async function getLaporan(query: any) {
@@ -88,6 +89,7 @@ export async function createLaporan(body: any, currentUser: { id: number; role: 
   });
 
   set.status = 201;
+  await useLog(`${currentUser.role} membuat laporan dengan id ${data.id}`)
   return { message: "Laporan berhasil dibuat", data, ok: true };
 }
 
@@ -118,6 +120,7 @@ export async function updateLaporan(id: number, body: any, currentUser: { id: nu
     },
     include: { kategori: true },
   });
+  await useLog(`${currentUser.role} update laporan dengan id ${id}`)
   return { message: "Laporan berhasil diupdate", data, ok: true };
 }
 
@@ -139,6 +142,7 @@ export async function editStatus(id: number, status: string, currentUser: { role
     isi_notifikasi: `Laporan Anda berubah status menjadi ${status}`,
     is_read: false
   })
+  await useLog(`${currentUser.role} mengubah status laporan dengan id ${id} menjadi ${status}`)
   return { message: "Status berhasil diupdate", data, ok: true };
 }
 
@@ -155,5 +159,6 @@ export async function deleteLaporan(id: number, currentUser: { id: number; role:
   }
 
   await prisma.laporan.delete({ where: { id } });
+  await useLog(`${currentUser.role} mengahpus laporan dengan id ${id}`)
   return { message: "Laporan berhasil dihapus", ok: true };
 }

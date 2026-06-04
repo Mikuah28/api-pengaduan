@@ -2,6 +2,7 @@
 import { useNotification } from "@/utils/useNotification";
 import prisma from "../database";
 import { isAdmin, type UserRole } from "../middleware/authMiddleware";
+import { useLog } from "@/utils/useLog";
 
 // GET — public
 export async function getKomentar(laporan_id: number, set: any) {
@@ -55,6 +56,8 @@ export async function createKomentar(
       is_read: false
     }
     );
+
+    await useLog(`user id ${currentUser.id} komentar ke laporan id ${laporan.id}`)
   }
 
   set.status = 201;
@@ -74,5 +77,7 @@ export async function deleteKomentar(id: number, currentUser: { id: number; role
   }
 
   await prisma.komentar.delete({ where: { id } });
+
+  await useLog(`${currentUser.role} id ${currentUser.id} delete komentar id ${id}`)
   return { message: "Komentar berhasil dihapus", ok: true };
 }
