@@ -22,7 +22,6 @@ export async function getLaporan(query: any, currentUser: { id: number }) {
         user: { select: { id: true, username: true, email: true, foto_profil: true } },
         kategori: true,
         _count: { select: { komentar: true, likes: true } },
-        // Ambil data likes milik currentUser (jika ada user yang login)
         likes: currentUser ? {
           where: { idUser: currentUser.id },
           select: { id: true }
@@ -33,7 +32,6 @@ export async function getLaporan(query: any, currentUser: { id: number }) {
     prisma.laporan.count({ where }),
   ]);
 
-  // Transformasi data untuk mengubah array likes menjadi boolean isLiked
   const formattedData = data.map((laporan: any) => {
     const { likes, ...rest } = laporan;
     return {
@@ -44,7 +42,7 @@ export async function getLaporan(query: any, currentUser: { id: number }) {
 
   return {
     message: "success",
-    data: formattedData, // Kembalikan data yang sudah diformat
+    data: formattedData,
     meta: { total, page: Number(page), limit: Number(limit), totalPages: Math.ceil(total / Number(limit)) },
     ok: true,
   };
@@ -74,7 +72,7 @@ export async function getLaporanById(id: number, set: any, currentUser: { id: nu
   const formattedData = {
     ...rest,
     is_liked: likes && likes.length > 0 ? true : false
-  };  
+  };
 
   return { message: "success", data: formattedData, ok: true };
 }
@@ -95,19 +93,33 @@ export async function getLaporanByUser(query: any, currentUser: { id: number; ro
       include: {
         user: { select: { id: true, username: true, email: true, foto_profil: true } },
         kategori: true,
-        _count: { select: { komentar: true } },
+        _count: { select: { komentar: true, likes: true } },
+        likes: currentUser ? {
+          where: { idUser: currentUser.id },
+          select: { id: true }
+        } : false
       },
       orderBy: { create_at: "desc" },
     }),
     prisma.laporan.count({ where }),
   ]);
 
+  const formattedData = data.map((laporan: any) => {
+    const { likes, ...rest } = laporan;
+    return {
+      ...rest,
+      is_liked: likes && likes.length > 0 ? true : false
+    };
+  });
+
   return {
-    message: "success", data,
+    message: "success", data:formattedData,
     meta: { total, page: Number(page), limit: Number(limit), totalPages: Math.ceil(total / Number(limit)) },
     ok: true,
   };
 }
+
+
 
 // POST buat laporan — semua role yang login
 export async function createLaporan(body: any, currentUser: { id: number; role: UserRole }, set: any) {
