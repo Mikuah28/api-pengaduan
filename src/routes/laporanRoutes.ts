@@ -9,14 +9,20 @@ import {
 export const laporanRoutes = new Elysia({ prefix: "/laporan" })
   .use(jwtPlugin)
 
-  .get("/", ({ query }) => getLaporan(query))
+  .get("/", async ({ query, jwt, headers, set }) => {
+    const currentUser = await verifyToken(jwt, headers.authorization, set);
+    return getLaporan(query, currentUser)
+  })
 
   .get("/user/me", async ({ query, jwt, headers, set }) => {
     const currentUser = await verifyToken(jwt, headers.authorization, set);
     return getLaporanByUser(query, currentUser);
   })
 
-  .get("/:id", ({ params, set }) => getLaporanById(Number(params.id), set))
+  .get("/:id", async ({ params, jwt, headers, set }) => {
+    const currentUser = await verifyToken(jwt, headers.authorization, set);
+    return getLaporanById(Number(params.id), set, currentUser)
+  })
 
   .post("/", async ({ body, jwt, headers, set }) => {
     const currentUser = await verifyToken(jwt, headers.authorization, set);

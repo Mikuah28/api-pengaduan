@@ -13,8 +13,10 @@ export async function getKomentar(laporan_id: number, set: any) {
   const data = await prisma.komentar.findMany({
     where: { id_laporan: laporan_id },
     include: {
-      user: { select: { id: true, username: true } },
-      balasKomentar: { orderBy: { created_at: "asc" } },
+      user: { select: { id: true, username: true, foto_profil: true } },
+      balasKomentar: { orderBy: { created_at: "asc" }, include:{
+        user: { select: { id: true, username: true, foto_profil: true } },
+      } },
     },
     orderBy: { created_at: "asc" },
   });

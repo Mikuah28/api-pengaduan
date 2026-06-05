@@ -6,7 +6,7 @@ import { saveImage } from "@/utils/saveImage";
 import { useLog } from "@/utils/useLog";
 
 // GET semua — public, bisa filter
-export async function getLaporan(query: any) {
+export async function getLaporan(query: any, currentUser: { id: number }) {
   const { status, kategori_id, page = "1", limit = "10" } = query;
   const where: any = {};
   if (status) where.status = status;
@@ -15,47 +15,68 @@ export async function getLaporan(query: any) {
   const skip = (Number(page) - 1) * Number(limit);
   const [data, total] = await prisma.$transaction([
     prisma.laporan.findMany({
-      where, skip, take: Number(limit),
+      where,
+      skip,
+      take: Number(limit),
       include: {
         user: { select: { id: true, username: true, email: true, foto_profil: true } },
         kategori: true,
         _count: { select: { komentar: true, likes: true } },
+        // Ambil data likes milik currentUser (jika ada user yang login)
+        likes: currentUser ? {
+          where: { idUser: currentUser.id },
+          select: { id: true }
+        } : false
       },
       orderBy: { create_at: "desc" },
     }),
     prisma.laporan.count({ where }),
   ]);
 
+  // Transformasi data untuk mengubah array likes menjadi boolean isLiked
+  const formattedData = data.map((laporan: any) => {
+    const { likes, ...rest } = laporan;
+    return {
+      ...rest,
+      is_liked: likes && likes.length > 0 ? true : false
+    };
+  });
+
   return {
-    message: "success", data,
+    message: "success",
+    data: formattedData, // Kembalikan data yang sudah diformat
     meta: { total, page: Number(page), limit: Number(limit), totalPages: Math.ceil(total / Number(limit)) },
     ok: true,
   };
 }
 
 // GET by id — public
-export async function getLaporanById(id: number, set: any) {
+export async function getLaporanById(id: number, set: any, currentUser: { id: number }) {
   const data = await prisma.laporan.findUnique({
     where: { id },
     include: {
       user: { select: { id: true, username: true, email: true, foto_profil: true } },
       kategori: true,
       _count: { select: { komentar: true, likes: true } },
-      komentar: {
-        include: { user: { select: { id: true, username: true, foto_profil: true } }, balasKomentar: {
-          include:{
-            user:{ select: { id: true, username: true, foto_profil: true } }
-          }
-        } },
-        orderBy: { created_at: "asc" },
-      },
+      likes: currentUser ? {
+        where: { idUser: currentUser.id },
+        select: { id: true }
+      } : false,
     },
   });
+
   if (!data) {
     set.status = 404;
     return { message: "Laporan tidak ditemukan", ok: false };
   }
-  return { message: "success", data, ok: true };
+
+  const { likes, ...rest } = data as any;
+  const formattedData = {
+    ...rest,
+    is_liked: likes && likes.length > 0 ? true : false
+  };  
+
+  return { message: "success", data: formattedData, ok: true };
 }
 
 // GET laporan milik sendiri — semua role yang login
