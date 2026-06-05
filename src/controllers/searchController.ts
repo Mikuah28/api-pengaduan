@@ -13,17 +13,17 @@ export async function search(query: string, set: any) {
     prisma.laporan.findMany({
       where: {
         OR: [
-          { judul:     { contains: q, mode: "insensitive" } },
+          { judul: { contains: q, mode: "insensitive" } },
           { deskripsi: { contains: q, mode: "insensitive" } },
-          { lokasi:    { contains: q, mode: "insensitive" } },
+          { lokasi: { contains: q, mode: "insensitive" } },
         ],
       },
       include: {
-        user:    { select: { id: true, username: true } },
+        user: { select: { id: true, username: true } },
         kategori: true,
-        _count:  { select: { komentar: true, likes: true } },
+        _count: { select: { komentar: true, likes: true } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { create_at: "desc" },
       take: 10,
     }),
 
@@ -38,7 +38,7 @@ export async function search(query: string, set: any) {
       where: {
         OR: [
           { username: { contains: q, mode: "insensitive" } },
-          { email:    { contains: q, mode: "insensitive" } },
+          { email: { contains: q, mode: "insensitive" } },
         ],
       },
       select: { id: true, username: true, email: true, role: true },
@@ -55,9 +55,9 @@ export async function search(query: string, set: any) {
       users,
     },
     meta: {
-      totalLaporan:  laporan.length,
+      totalLaporan: laporan.length,
       totalKategori: kategori.length,
-      totalUsers:    users.length,
+      totalUsers: users.length,
     },
     ok: true,
   };
@@ -65,13 +65,13 @@ export async function search(query: string, set: any) {
 
 // Search laporan saja dengan filter tambahan
 export async function searchLaporan(params: {
-  query?:       string;
-  status?:      string;
+  query?: string;
+  status?: string;
   kategori_id?: number;
-  lokasi?:      string;
-  page?:        number;
-  limit?:       number;
-}) {
+  lokasi?: string;
+  page?: number;
+  limit?: number;
+}, currentUser: { id: number }) {
   const { query, status, kategori_id, lokasi, page = 1, limit = 10 } = params;
   const skip = (page - 1) * limit;
 
@@ -79,12 +79,12 @@ export async function searchLaporan(params: {
 
   if (query?.trim()) {
     where.OR = [
-      { judul:     { contains: query.trim(), mode: "insensitive" } },
+      { judul: { contains: query.trim(), mode: "insensitive" } },
       { deskripsi: { contains: query.trim(), mode: "insensitive" } },
-      { lokasi:    { contains: query.trim(), mode: "insensitive" } },
+      { lokasi: { contains: query.trim(), mode: "insensitive" } },
     ];
   }
-  if (status)      where.status     = status;
+  if (status) where.status = status;
   if (kategori_id) where.kategori_id = kategori_id;
   if (lokasi?.trim()) {
     where.lokasi = { contains: lokasi.trim(), mode: "insensitive" };
@@ -96,18 +96,30 @@ export async function searchLaporan(params: {
       skip,
       take: limit,
       include: {
-        user:    { select: { id: true, username: true, email: true } },
+        user: { select: { id: true, username: true, email: true, foto_profil: true } },
         kategori: true,
-        _count:  { select: { komentar: true, likes: true } },
+        _count: { select: { komentar: true, likes: true } },
+        likes: currentUser ? {
+          where: { idUser: currentUser.id },
+          select: { id: true }
+        } : false
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { create_at: "desc" },
     }),
     prisma.laporan.count({ where }),
   ]);
 
+  const formattedData = data.map((laporan: any) => {
+    const { likes, ...rest } = laporan;
+    return {
+      ...rest,
+      is_liked: likes && likes.length > 0 ? true : false
+    };
+  });
+
   return {
     message: "success",
-    data,
+    data: formattedData,
     meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     ok: true,
   };
