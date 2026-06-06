@@ -5,14 +5,47 @@ import { requireAdmin, requireSuperAdmin, type UserRole } from "../middleware/au
 import { useLog } from "@/utils/useLog";
 
 // GET semua user — admin & super_admin
-export async function getUsers(currentUser: { id: number; role: UserRole }, set: any) {
+export async function getUsers(
+  query: any,
+  currentUser: { id: number; role: UserRole },
+  set: any
+) {
   requireAdmin(currentUser.role, set);
 
-  const users = await prisma.user.findMany({
-    select: { id: true, username: true, email: true, role: true, createdAt: true },
-    orderBy: { createdAt: "desc" },
-  });
-  return { message: "success", data: users, ok: true };
+  const { role, page = "1", limit = "10" } = query;
+
+  const where: any = {};
+  if (role) where.role = { nama_role: role };
+
+  const skip = (Number(page) - 1) * Number(limit);
+  const [users, total] = await prisma.$transaction([
+    prisma.user.findMany({
+      where,
+      skip,
+      take: Number(limit),
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: { select: { nama_role: true } },
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.user.count({ where }),
+  ]);
+
+  return {
+    message: "success",
+    data: users,
+    meta: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / Number(limit)),
+    },
+    ok: true,
+  };
 }
 
 // GET user by id — user hanya bisa lihat diri sendiri, admin/super_admin bisa semua

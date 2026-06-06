@@ -17,22 +17,37 @@ export async function getProfileUser(currentUser: { id: number }) {
             nama_role: true,
           },
         },
-        // _count: {
-        //   select: {
-        //     laporan: true,
-        //     komentar: true,
-        //   },
-        // },
+        _count: {
+          select: {
+            laporan: true, 
+            komentar: true, 
+          },
+        },
+        laporan: {
+          where: {
+            status: "selesai", 
+          },
+          select: {
+            id: true,
+          },
+        },
       },
     });
 
     if (!user) {
       return { message: "User tidak ditemukan", ok: false };
     }
-    const { role, ...rest } = user;
+
+    const { role, _count, laporan, ...rest } = user;
+
     const formattedData = {
       ...rest,
       role: role.nama_role,
+      stats: {
+        total_laporan: _count.laporan,          
+        laporan_selesai: laporan.length,       
+        total_komentar: _count.komentar,        
+      },
     };
 
     return { message: "success", data: formattedData, ok: true };
@@ -40,7 +55,6 @@ export async function getProfileUser(currentUser: { id: number }) {
     return { message: error.message || "Internal server error", ok: false };
   }
 }
-
 export async function updateProfileUser(
   body: any,
   currentUser: { id: number },

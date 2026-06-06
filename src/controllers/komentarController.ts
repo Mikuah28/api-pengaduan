@@ -1,8 +1,52 @@
 // src/controllers/komentarController.ts
 import { useNotification } from "@/utils/useNotification";
 import prisma from "../database";
-import { isAdmin, type UserRole } from "../middleware/authMiddleware";
+import { isAdmin, requireAdmin, type UserRole } from "../middleware/authMiddleware";
 import { useLog } from "@/utils/useLog";
+
+// GET semua komentar — admin & super_admin
+export async function getAllKomentar(
+  query: any,
+  currentUser: { id: number; role: UserRole },
+  set: any
+) {
+  requireAdmin(currentUser.role, set);
+
+  const { page = "1", limit = "10" } = query;
+
+  const skip = (Number(page) - 1) * Number(limit);
+  const [data, total] = await prisma.$transaction([
+    prisma.komentar.findMany({
+      skip,
+      take: Number(limit),
+      include: {
+        user: { select: { id: true, username: true, foto_profil: true } },
+        laporan: { select: { id: true, judul: true } },
+        balasKomentar: {
+          orderBy: { created_at: "asc" },
+          include: {
+            user: { select: { id: true, username: true, foto_profil: true } },
+          },
+        },
+        _count: { select: { balasKomentar: true } },
+      },
+      orderBy: { created_at: "desc" },
+    }),
+    prisma.komentar.count(),
+  ]);
+
+  return {
+    message: "success",
+    data,
+    meta: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / Number(limit)),
+    },
+    ok: true,
+  };
+}
 
 // GET — public
 export async function getKomentar(laporan_id: number, set: any) {

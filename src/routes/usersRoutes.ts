@@ -8,9 +8,9 @@ const roleEnum = t.Union([t.Literal("user"), t.Literal("admin"), t.Literal("supe
 export const usersRoutes = new Elysia({ prefix: "/users" })
   .use(jwtPlugin)
 
-  .get("/", async ({ jwt, headers, set }) => {
+  .get("/", async ({ query, jwt, headers, set }) => {
     const currentUser = await verifyToken(jwt, headers.authorization, set);
-    return getUsers(currentUser, set);
+    return getUsers(query, currentUser, set);
   })
 
   .get("/:id", async ({ params, jwt, headers, set }) => {

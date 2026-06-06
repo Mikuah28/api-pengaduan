@@ -13,6 +13,11 @@ export const profileRoutes = new Elysia({ prefix: "/profile" })
     return getProfileUser(currentUser);
   })
 
+  .get("/:id", async ({ params, jwt, headers, set }) => {
+    const currentUser = await verifyToken(jwt, headers.authorization, set);
+    return getProfileUser({id: Number(params.id)});
+  })
+
   .put("/", async ({ body, jwt, headers, set }) => {
     const currentUser = await verifyToken(jwt, headers.authorization, set);
     return updateProfileUser(body, currentUser, set);

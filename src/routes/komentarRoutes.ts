@@ -1,10 +1,15 @@
 // src/routes/komentarRoutes.ts
 import { Elysia, t } from "elysia";
 import { jwtPlugin, verifyToken } from "../middleware/authMiddleware";
-import { getKomentar, createKomentar, deleteKomentar } from "../controllers/komentarController";
+import { getAllKomentar, getKomentar, createKomentar, deleteKomentar } from "../controllers/komentarController";
 
 export const komentarRoutes = new Elysia({ prefix: "/komentar" })
   .use(jwtPlugin)
+
+  .get("/all", async ({ query, jwt, headers, set }) => {
+    const currentUser = await verifyToken(jwt, headers.authorization, set);
+    return getAllKomentar(query, currentUser, set);
+  })
 
   .get("/", ({ query, set }) => getKomentar(Number((query as any).laporan_id), set))
 
