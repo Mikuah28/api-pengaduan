@@ -18,4 +18,4 @@ COPY . .
 EXPOSE 5000
 
 # Run migrations on startup (opsional)
-CMD ["sh", "-c", "bunx prisma migrate deploy && bun src/index.js"]
+CMD ["sh", "-c",]
