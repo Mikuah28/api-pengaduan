@@ -1,4 +1,5 @@
 // src/controllers/balasKomentarController.ts
+import { useNotification } from "@/utils/useNotification";
 import prisma from "../database";
 import { requireAdmin,  type UserRole } from "../middleware/authMiddleware";
 
@@ -19,7 +20,7 @@ export async function getBalasKomentar(komentar_id: number, set: any) {
 // POST — semua role yang login
 export async function createBalasKomentar(
   body: { id_komentar: number; balas_komentar: string },
-  currentUser: { id: number; role: UserRole },
+  currentUser: { id: number; name: string;  role: UserRole },
   set: any
 ) {
   const komentar = await prisma.komentar.findUnique({ where: { id: body.id_komentar } });
@@ -31,6 +32,17 @@ export async function createBalasKomentar(
   const data = await prisma.balasKomentar.create({
     data: { id_user: currentUser.id, id_komentar: body.id_komentar, balas_komentar: body.balas_komentar },
   });
+
+    if (komentar.id_user !== currentUser.id) {
+      await useNotification({
+        id_user: komentar.id_user, 
+        id_laporan: komentar.id_laporan,
+        id_komentar: data.id, 
+        isi_notifikasi: `${currentUser.name} membuat balasan baru pada komentar anda`,
+        is_read: false
+      }
+      );
+    }
 
   set.status = 201;
   return { message: "Balasan berhasil ditambahkan", data, ok: true };

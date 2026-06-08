@@ -23,7 +23,7 @@ export async function login(
   }
 
   const roleName = user.role.nama_role;
-  const token = await jwt.sign({ id: user.id, role: roleName });
+  const token = await jwt.sign({ id: user.id, name: user.username, role: roleName });
 
   await useLog(`${user.role.nama_role} id ${user.id} login`)
 

@@ -197,7 +197,7 @@ export async function editStatus(id: number, status: string, currentUser: { role
   await useNotification({
     id_user: existing.id_user,
     id_laporan: existing.id,
-    isi_notifikasi: `Laporan Anda berubah status menjadi ${status}`,
+    isi_notifikasi: `${currentUser.role} mengubah status laporan menjadi ${status}`,
     is_read: false
   })
   await useLog(`${currentUser.role} mengubah status laporan dengan id ${id} menjadi ${status}`)

@@ -66,7 +66,7 @@ export async function createNotification(body: any, currentUser: { id: number; r
       id_user: Number(id_user),
       id_laporan: id_laporan ? Number(id_laporan) : null,
       id_komentar: id_komentar ? Number(id_komentar) : null,
-      isi_notifikasi,
+      isi_notifikasi: `Notifikasi dari Admin: ${isi_notifikasi}`,
     },
   });
 

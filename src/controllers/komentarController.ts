@@ -58,9 +58,11 @@ export async function getKomentar(laporan_id: number, set: any) {
     where: { id_laporan: laporan_id },
     include: {
       user: { select: { id: true, username: true, foto_profil: true } },
-      balasKomentar: { orderBy: { created_at: "asc" }, include:{
-        user: { select: { id: true, username: true, foto_profil: true } },
-      } },
+      balasKomentar: {
+        orderBy: { created_at: "asc" }, include: {
+          user: { select: { id: true, username: true, foto_profil: true } },
+        }
+      },
     },
     orderBy: { created_at: "asc" },
   });
@@ -70,7 +72,7 @@ export async function getKomentar(laporan_id: number, set: any) {
 // POST — semua role yang login
 export async function createKomentar(
   body: { id_laporan: number; isi_komentar: string },
-  currentUser: { id: number; role: UserRole },
+  currentUser: { id: number; name: string; role: UserRole },
   set: any
 ) {
   // 1. Ambil data laporan beserta id_user pemilik laporan untuk target notifikasi
@@ -98,13 +100,13 @@ export async function createKomentar(
       id_user: laporan.id_user, // Penerima adalah pemilik laporan
       id_laporan: body.id_laporan,
       id_komentar: data.id, // ID komentar yang baru saja dibuat
-      isi_notifikasi: "komentar baru pada laporan anda",
+      isi_notifikasi: `${currentUser.name} membuat komentar baru pada laporan anda`,
       is_read: false
     }
     );
-
-    await useLog(`user id ${currentUser.id} komentar ke laporan id ${laporan.id}`)
   }
+
+  await useLog(`user id ${currentUser.id} komentar ke laporan id ${laporan.id}`)
 
   set.status = 201;
   return { message: "Komentar berhasil ditambahkan", data, ok: true };

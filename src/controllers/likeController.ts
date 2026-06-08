@@ -1,10 +1,12 @@
+import { useNotification } from "@/utils/useNotification";
 import prisma from "../database";
 import type { UserRole } from "../middleware/authMiddleware";
+import { useLog } from "@/utils/useLog";
 
 // Toggle like — jika sudah like maka unlike, jika belum maka like
 export async function toggleLike(
   idLaporan: number,
-  currentUser: { id: number; role: UserRole },
+  currentUser: { id: number; name: string; role: UserRole },
   set: any
 ) {
   const laporan = await prisma.laporan.findUnique({ where: { id: idLaporan } });
@@ -26,6 +28,18 @@ export async function toggleLike(
     // Like
     await prisma.like.create({ data: { idUser: currentUser.id, idLaporan } });
     const total = await prisma.like.count({ where: { idLaporan } });
+
+    if (laporan.id_user !== currentUser.id) {
+      await useNotification({
+        id_user: laporan.id_user, // Penerima adalah pemilik laporan
+        id_laporan: laporan.id,
+        isi_notifikasi: `${currentUser.name} menyukai postingan anda`,
+        is_read: false
+      })
+    }
+
+    await useLog(`user id ${currentUser.id} like ke laporan id ${laporan.id}`)
+
     return { message: "Berhasil like", liked: true, total, ok: true };
   }
 }
