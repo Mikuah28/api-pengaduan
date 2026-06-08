@@ -1,14 +1,21 @@
-FROM oven/bun:latest AS base
+# Dockerfile
+FROM oven/bun:1-slim AS base
 WORKDIR /app
 
-FROM base AS install
+# Copy package files
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
 
-FROM base AS release
-COPY --from=install /app/node_modules ./node_modules
+# Copy prisma schema
+COPY prisma ./prisma/
+
+# Install dependencies & generate Prisma Client
+RUN bun install --frozen-lockfile
+RUN bunx prisma generate
+
+# Copy source code
 COPY . .
 
 EXPOSE 5000
 
-CMD ["bun", "run", "start"]
+# Run migrations on startup (opsional)
+CMD ["sh", "-c", "bunx prisma migrate deploy && bun src/index.js"]
